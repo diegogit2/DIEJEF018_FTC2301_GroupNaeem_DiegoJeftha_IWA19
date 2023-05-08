@@ -24,13 +24,23 @@ const dataSettingsTheme = document.querySelector('[data-settings-theme]')
 const dataSettingsCancel = document.querySelector('[data-settings-cancel]')
 
 const matches = books
-const page = 1;
+let page = 1;
 
 
 
+/**
+ * checks if books is falsy or not an array, if either is true throw error message
+ * checks if range is falsy or array less than 2, if either is true throw error message
+ */
 
-// if (!books && !Array.isArray(books)) throw new Error('Source required') 
-// if (!range && range.length < 2) throw new Error('Range must be an array with two numbers')
+let range = [];
+if (!books && !Array.isArray(books)) {
+    throw new Error('Source required')
+}
+
+if (!range && range.length < 2) {
+    throw new Error('Range must be an array with two numbers')
+}
 
 const fragment = document.createDocumentFragment()
 const extracted = books.slice(0, 36)
@@ -120,13 +130,66 @@ dataListButton.innerHTML = /* html */[
     <span class="list__remaining"> (${matches.length - [page * BOOKS_PER_PAGE] > 0 ? matches.length - [page * BOOKS_PER_PAGE] : 0})</span>`,
 ]
 
-dataListButton = `Show more (${books.length} - ${BOOKS_PER_PAGE})`
+dataListButton == `Show more (${books.length} - ${BOOKS_PER_PAGE})`
 dataListButton.disabled = !(matches.length - (page * BOOKS_PER_PAGE) > 0)
 
+
+
 dataListButton.addEventListener('click', () => {
-    document.querySelector('[data-list-items]').appendChild(createPreviewsFragment(matches, page * BOOKS_PER_PAGE, (page + 1) * BOOKS_PER_PAGE, page));
-    actions.list.updateRemaining();
+
+    const start = page * BOOKS_PER_PAGE;
+    const end = start + BOOKS_PER_PAGE;
+    const newBook = books.slice(start, end)
+    const newBookFragment = document.createDocumentFragment();
+
+    for (let i = 0; i < newBook.length; i++) {
+        const moreBooks = newBook[i];
+        const showPreview = createPreview(moreBooks);
+        newBookFragment.appendChild(showPreview);
+    }
+    dataListItems.appendChild(newBookFragment);
+
+    const remaining = matches.length - page * BOOKS_PER_PAGE;
+    dataListButton.innerHTML = /* html */ `
+        <span>Show more</span>
+        <span class="list__remaining"> (${remaining > 0 ? remaining : 0})</span>
+       `;
+    dataListButton.disabled = remaining <= 0;
+    page = page + 1
 });
+
+function createPreview(preview) {
+    const { author: authorId, id, image, title } = preview;
+    const moreBooks = document.createElement('button');
+    moreBooks.classList = 'preview';
+    moreBooks.setAttribute('data-preview', id);
+
+    moreBooks.innerHTML = /* html */ `
+        <img
+            class="preview__image"
+            src="${image}"
+        />
+        <div class="preview__info">
+            <h3 class="preview__title">${title}</h3>
+            <div class="preview__author">${authors[authorId]}</div>
+        </div>
+    `;
+    return moreBooks
+
+}
+
+// dataListItems.innerHTML = ''
+// fragment == document.createDocumentFragment()
+// extracted = source.slice(range[0], range[1])
+
+
+
+// dataListItems.appendChild(fragments)
+// initial === matches.length - [page * BOOKS_PER_PAGE]
+// remaining === hasRemaining ? initial : 0
+// dataListButton.disabled = initial > 0
+
+
 
 
 /*--------------------------------------------------------------------*/
@@ -145,19 +208,20 @@ const css = {
 };
 
 // theme
-const v = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'night' : 'day';
-dataSettingsTheme.value === window.matchMedia || window.matchMedia('(prefers-color-scheme: dark)').matches ? 'night' : 'day';
+window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'night' : 'day';
+// dataSettingsTheme.value === window.matchMedia || window.matchMedia('(prefers-color-scheme: dark)').matches ? 'night' : 'day';
 
 
-document.documentElement.style.setProperty('--color-dark', css[v].dark);
-document.documentElement.style.setProperty('--color-light', css[v].light);
+// document.documentElement.style.setProperty('--color-dark', css[v][1]);
+// document.documentElement.style.setProperty('--color-light', css[v][0]);
 
 
 
 dataSettingsForm.addEventListener("submit", (event) => {
-    event.preventDefault()
+    event.preventDefault();
     const formSubmit = new FormData(event.target)
     const option = Object.fromEntries(formSubmit)
+
     if (option.theme === 'night') {
         document.documentElement.style.setProperty('--color-light', css[option.theme][1])
         document.documentElement.style.setProperty('--color-dark', css[option.theme][0])
@@ -215,84 +279,70 @@ dataSearchCancel.addEventListener('click', () => {
     dataSearchOverlay.close();
 })
 
+// dataSearchOverlay.addEventListener('submit', (event) => {
+//     event.preventDefault();
+//     const formData = new FormData(event.target)
+//     const result = Object.fromEntries(formData)
+//     document.documentElement.style.setProperty('--color-dark', css[result.theme][0]);
+//     document.documentElement.style.setProperty('--color-light', css[result.theme][1]);
+//     if (dataSettingsOverlay.open) {
+//         dataSettingsOverlay = false
+//     }
+// })
+
 /*-------------------------------------------------------------------------------------------*/
 
 
-
+/*------------------------Book filters--------------------------------*/
 let booksList = [];
 
-dataSearchForm.addEventListener('click', (filters, event) => {
-    preventDefault();   // prevents default form submit behavior
+dataSearchForm.addEventListener('submit', (event) => {
+    event.preventDefault();   // prevents default form submit behavior
     const formData = new FormData(event.target);
-    filters = Object.fromEntries(formData);
+    const filters = Object.fromEntries(formData);
     const result = [];
 
-    let titleMatch = null;
-    let authorMatch = null;
-    let genreMatch = null;
+    for (const book of books) {
+        const titleMatch = filters.title.trim() !== '' && book.title.toLowerCase().includes(filters.title.toLowerCase());  // use || instead of &&
+        const authorMatch = filters.author !== 'any' && book.author.includes(filters.author)
+        const genreMatch = filters.genre !== 'any' && book.genres.includes(filters.genre)
 
-    for (const book of booksList) {
-        titleMatch = filters.title.trim() = '' || book.title.toLowerCase().includes[filters.title.toLowerCase()];  // use || instead of &&
-        authorMatch = filters.author = 'any' || book.author === filters.author
+        if (titleMatch || authorMatch || genreMatch) {
+            result.push(book);
+        }
     }
 
-    if (filters.genre = 'any') {
-        genreMatch = true;
+    if (result.length > 0) {
+        dataListMessage.classList.remove('list__message_show');
+        dataListButton.disabled = true;
+        dataListItems.innerHTML = '';
+
+        const searchBooks = document.createDocumentFragment();
+
+        for (let i = 0; i < result.length; i++) {
+            const book = result[i];
+            const bookPreview = createPreview(book);
+            searchBooks.appendChild(bookPreview);
+        }
+        dataListItems.appendChild(searchBooks)
     } else {
-        genreMatch = false;
+        dataListMessage.classList.add('list__message_show');
+        dataListButton.disabled = true;
+        dataListItems.innerHTML = '';
     }
 
-    for (const genre of books.genres) {
-        if (genre = filters.genre) {
-            genreMatch === true
-        }
 
 
 
-        if (titleMatch && authorMatch && genreMatch) {
-            result.push(books)
-        }
 
 
-        if (display.length < 1) {
-            dataListMessage.class.add('list__message_show')
-        } else {
-            dataListMessage.class.remove('list__message_show')
-        }
-
-        
-
-
-        // dataListItems.innerHTML = ''
-        // fragment = document.createDocumentFragment()
-        // extracted = source.slice(range[0], range[1])
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    dataSearchOverlay.close();
+    dataSearchForm.reset();
 
 
 
-        // dataListItems.appendChild(fragments)
-        // initial === matches.length - [page * BOOKS_PER_PAGE]
-        // remaining === hasRemaining ? initial : 0
-        // dataListButton.disabled = initial > 0
-
-        // dataListButton.innerHTML = /* html */ `
-        // <span>Show more</span>
-        // ${remaining > 0 ? `<span class="list__remaining">(${remaining})</span>` : ''}
-        // `;
-
-        // window.scrollTo({ top: 0, behavior: 'smooth' });
-        // dataSearchOverlay.open = false
-
-
-        // dataSearchOverlay.submit; {
-        //     preventDefault()
-        //     const formData = new FormData(event.target)
-        //     const result = Object.fromEntries(formData)
-        //     document.documentElement.style.setProperty('--color-dark', css[result.theme].dark);
-        //     document.documentElement.style.setProperty('--color-light', css[result.theme].light);
-        //     dataSettingsOverlay).open === false
-        // }
-    })
-
+})
 
 /*--------------------------------Book Preview-----------------------------------------*/
 
@@ -329,7 +379,8 @@ dataListItems.addEventListener('click', (event) => {
         return;
     }
     dataListActive.open = true;
-    dataListBlur.src, dataListImage.src = active.image;
+    dataListImage.src = active.image;
+    dataListBlur.src = active.image;
     dataListTitle.textContent = active.title;
 
     dataListSubtitle.textContent = `${authors[active.author]} (${new Date(active.published).getFullYear()})`
