@@ -268,22 +268,31 @@ window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ?
 // document.documentElement.style.setProperty('--color-dark', css[v][1]);
 // document.documentElement.style.setProperty('--color-light', css[v][0]);
 
-
-
 html.settings.form.addEventListener("submit", (event) => {
     event.preventDefault();
     const formSubmit = new FormData(event.target)
     const option = Object.fromEntries(formSubmit)
 
-    if (option.theme === 'night') {
-        document.documentElement.style.setProperty('--color-light', css[option.theme][1])
-        document.documentElement.style.setProperty('--color-dark', css[option.theme][0])
-    } else if (option.theme === 'day') {
-        document.documentElement.style.setProperty('--color-light', css[option.theme][1])
-        document.documentElement.style.setProperty('--color-dark', css[option.theme][0])
+    // if (option.theme === 'night') {
+    //     document.documentElement.style.setProperty('--color-light', css[option.theme][1])
+    //     document.documentElement.style.setProperty('--color-dark', css[option.theme][0])
+    // } else if (option.theme === 'day') {
+    //     document.documentElement.style.setProperty('--color-light', css[option.theme][1])
+    //     document.documentElement.style.setProperty('--color-dark', css[option.theme][0])
+    // }
+    option.theme = {
+        // @ts-ignore
+        night:document.documentElement.style.setProperty('--color-light', css[option.theme][1]),
+        // @ts-ignore
+        night:document.documentElement.style.setProperty('--color-dark', css[option.theme][0]),
+
+        day:document.documentElement.style.setProperty('--color-light', css[option.theme][1]),
+        // @ts-ignore
+        day:document.documentElement.style.setProperty('--color-dark', css[option.theme][0])
     }
+
     html.settings.overlay.close()
-})
+});
 
 /**
 * when the 'dataHeaderSettings' element is clicked, function focuses on the input field
