@@ -88,6 +88,7 @@ if (!books && !Array.isArray(books)) {
     throw new Error('Source required');
 }
 
+// @ts-ignore
 if (!range && range.length < 2) {
     throw new Error('Range must be an array with two numbers');
 }
@@ -102,6 +103,7 @@ const extracted = books.slice(0, 36)
 for (let i = 0; i < extracted.length; i++) {
     const { author: authorId, id, image, title } = extracted[i]
     const element = document.createElement('button')          //creates a new button
+    // @ts-ignore
     element.classList = 'preview'
     element.setAttribute('data-preview', id)
     element.innerHTML = /* html */ `
@@ -177,7 +179,9 @@ html.search.authors.appendChild(authorOfBook)
 /*-------------------Show more button-------------------------------*/
 html.list.button.innerHTML = /* html */[
     `<span>Show more</span>
-    <span class="list__remaining"> (${matches.length - [page * BOOKS_PER_PAGE] > 0 ? matches.length - [page * BOOKS_PER_PAGE] : 0})</span>`,
+    <span class="list__remaining"> (${matches.length - 
+// @ts-ignore
+    [page * BOOKS_PER_PAGE] > 0 ? matches.length - [page * BOOKS_PER_PAGE] : 0})</span>`,
 ]
 
 html.list.button == `Show more (${books.length} - ${BOOKS_PER_PAGE})`
@@ -214,6 +218,7 @@ html.list.button.addEventListener('click', () => {
 function createPreview(preview) {
     const { author: authorId, id, image, title } = preview;
     const moreBooks = document.createElement('button');
+    // @ts-ignore
     moreBooks.classList = 'preview';
     moreBooks.setAttribute('data-preview', id);
 
@@ -247,6 +252,21 @@ function createPreview(preview) {
 
 /*--------------------------------------------------------------------*/
 
+/**
+ * Function to close overlay 
+ * @returns {boolean}
+ */
+const close = (element) => {
+    return element.open = false;
+};
+
+/**
+ * Function to open overlay 
+ * @returns {boolean}
+ */
+const open = (element) => {
+    return element.open = true;
+};
 
 
 
@@ -291,7 +311,7 @@ html.settings.form.addEventListener("submit", (event) => {
         day:document.documentElement.style.setProperty('--color-dark', css[option.theme][0])
     }
 
-    html.settings.overlay.close()
+    
 });
 
 /**
@@ -301,18 +321,22 @@ html.settings.form.addEventListener("submit", (event) => {
 html.header.settings.addEventListener('click', () => {
     html.settings.theme.focus();
 
-    if (html.settings.overlay.open) {
-        html.header.settings.showModal()
-    } else {
-        html.settings.overlay.showModal();
-    }
-})
+    open(html.settings.overlay);
+    
+    // if (html.settings.overlay.open) {
+    //     html.header.settings.showModal()
+    // } else {
+    //     html.settings.overlay.showModal();
+    // }
+});
 
 /**
 * when cancel button is clicked, closes the setting overlay
 */
 html.settings.cancel.addEventListener('click', () => {
-    html.settings.overlay.close();
+    close(html.settings.overlay);
+
+    // html.settings.overlay.close();
 })
 /*-----------------------------------------------------------------------------------------------*/
 
@@ -326,20 +350,23 @@ html.settings.cancel.addEventListener('click', () => {
  */
 html.header.search.addEventListener('click', () => {
     html.search.title.focus();
+    open(html.search.overlay);
 
-    if (html.search.overlay.open) {
-        html.header.search.showModal()
-    } else {
-        html.search.overlay.showModal();
-    }
-})
+    // if (html.search.overlay.open) {
+    //     html.header.search.showModal()
+    // } else {
+    //     html.search.overlay.showModal();
+    // }
+});
 
 /**
  * when cancel button is clicked, closes the search overlay
  */
 html.search.cancel.addEventListener('click', () => {
-    html.search.overlay.close();
-})
+    close(html.search.overlay);
+
+    // html.search.overlay.close();
+});
 
 // dataSearchOverlay.addEventListener('submit', (event) => {
 //     event.preventDefault();
@@ -356,6 +383,7 @@ html.search.cancel.addEventListener('click', () => {
 
 
 /*------------------------Book filters--------------------------------*/
+// @ts-ignore
 let booksList = [];
 
 html.search.form.addEventListener('submit', (event) => {
@@ -365,8 +393,11 @@ html.search.form.addEventListener('submit', (event) => {
     const result = [];
 
     for (const book of books) {
+        // @ts-ignore
         const titleMatch = filters.title.trim() !== '' && book.title.toLowerCase().includes(filters.title.toLowerCase());  
+        // @ts-ignore
         const authorMatch = filters.author !== 'any' && book.author.includes(filters.author)
+        // @ts-ignore
         const genreMatch = filters.genre !== 'any' && book.genres.includes(filters.genre)
 
         if (titleMatch || authorMatch || genreMatch) {
@@ -399,7 +430,7 @@ html.search.form.addEventListener('submit', (event) => {
 
 
     window.scrollTo({ top: 0, behavior: 'smooth' });
-    html.search.overlay.close();
+    // html.search.overlay.close();
     html.search.form.reset();
 
 
@@ -412,7 +443,8 @@ html.search.form.addEventListener('submit', (event) => {
  * when close button is clicked, closes the book preview
  */
 html.list.close.addEventListener('click', () => {
-    html.list.active.close();
+    close(html.list.active);
+    // html.list.active.close();
 })
 
 
